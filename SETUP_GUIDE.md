@@ -1,0 +1,3 @@
+# ORION SETUP GUIDE
+1. Firebase Init
+2. Deploy...
