@@ -1,1 +1,304 @@
-<!DOCTYPE html><html>... [Orion Corporate Site Code] ...</html>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager Command Centre</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="./hotel_config.js"></script>
+    <style>
+        :root { --primary: #1a365d; --secondary: #2c5282; --accent: #3b82f6; --bg: #f4f7f6; --success: #22c55e; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; height: 100vh; overflow: hidden; }
+        
+        .sidebar { width: 250px; background: var(--primary); color: white; display: flex; flex-direction: column; }
+        .brand { padding: 25px; font-weight: 800; font-size: 1.2rem; border-bottom: 1px solid rgba(255,255,255,0.1); letter-spacing: 1px; }
+        .menu { padding: 20px 0; flex: 1; }
+        .menu-item { padding: 15px 25px; cursor: pointer; color: #cbd5e0; transition: 0.3s; display: flex; align-items: center; gap: 12px; }
+        .menu-item:hover, .menu-item.active { background: rgba(255,255,255,0.1); color: white; border-left: 4px solid var(--accent); }
+        
+        .main { flex: 1; padding: 30px; overflow-y: auto; display: flex; flex-direction: column; }
+        
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .page-title { font-size: 1.8rem; font-weight: 700; color: var(--primary); }
+        .live-badge { 
+            background: #dcfce7; color: #15803d; padding: 6px 12px; border-radius: 20px; 
+            font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; gap: 6px; 
+        }
+        .live-dot { width: 8px; height: 8px; background: #15803d; border-radius: 50%; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        
+        .ticket-card { 
+            background: white; border-radius: 10px; padding: 20px; 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-left: 5px solid transparent;
+            transition: transform 0.2s; cursor: pointer;
+        }
+        .ticket-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .ticket-card.urgent { border-left-color: #ef4444; }
+        .ticket-card.normal { border-left-color: #3b82f6; }
+        .ticket-card.completed { border-left-color: #22c55e; opacity: 0.7; }
+
+        .card-header { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.85rem; color: #64748b; }
+        .card-title { font-weight: 700; color: #1e293b; margin-bottom: 5px; font-size: 1.1rem; }
+        .card-detail { color: #475569; font-size: 0.95rem; margin-bottom: 15px; }
+        .tag { background: #f1f5f9; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; color: #475569; font-weight: 600; }
+
+        /* Modal */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
+        .modal-box { background: white; padding: 30px; border-radius: 12px; width: 450px; position: relative; }
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; margin-right: 10px; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-ai { background: linear-gradient(135deg, #6366f1, #a855f7); color: white; margin-bottom: 15px; width: 100%; }
+        
+        .ai-response-box {
+            background: #f3f4f6; padding: 15px; border-radius: 8px; margin-bottom: 15px; 
+            font-size: 0.9rem; font-style: italic; color: #4b5563; display: none; border-left: 4px solid #8b5cf6;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="brand">ORION COMMAND</div>
+        <div class="menu">
+            <div class="menu-item active" onclick="switchTab('RESTAURANT RESERVATIONS', this)">
+                <i class="fas fa-utensils"></i> Dining
+            </div>
+            <div class="menu-item" onclick="switchTab('HOUSEKEEPING', this)">
+                <i class="fas fa-broom"></i> Housekeeping
+            </div>
+            <div class="menu-item" onclick="switchTab('MAINTENANCE', this)">
+                <i class="fas fa-tools"></i> Maintenance
+            </div>
+            <div class="menu-item" onclick="switchTab('HOTEL RESERVATIONS', this)">
+                <i class="fas fa-bed"></i> Bookings
+            </div>
+            <div class="menu-item" onclick="switchTab('ANALYTICS', this)">
+                <i class="fas fa-chart-pie"></i> Analytics
+            </div>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="top-bar">
+            <h1 class="page-title" id="page-title">Dining Overview</h1>
+            <div class="live-badge">
+                <div class="live-dot"></div> LIVE FEED (Updating: <span id="timer">30</span>s)
+            </div>
+        </div>
+
+        <div id="content-area" class="dashboard-grid">
+            <!-- Content injected here -->
+        </div>
+    </div>
+
+    <!-- Status Modal -->
+    <div class="modal" id="modal">
+        <div class="modal-box">
+            <h2 id="modal-title">Ticket Action</h2>
+            <p id="modal-desc" style="color:#666; margin-bottom:15px;"></p>
+            
+            <button class="btn btn-ai" onclick="getAiSuggestion()">
+                <i class="fas fa-magic"></i> ✨ AI Suggest Response
+            </button>
+            <div id="ai-suggestion" class="ai-response-box">Loading AI suggestion...</div>
+
+            <div style="display:flex; justify-content: flex-end;">
+                <button class="btn btn-success" onclick="updateStatus('Completed')">Mark Complete</button>
+                <button class="btn btn-primary" onclick="updateStatus('In Progress')">In Progress</button>
+                <button class="btn" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const CONFIG = typeof HOTEL_CONFIG !== 'undefined' ? HOTEL_CONFIG : { system: { backend: { scriptUrl: "https://script.google.com/macros/s/AKfycbwQb7bOHwfMQc-L_gqnw_7nLSK2F9iT8cQafTM5fZ-rT6f3tBeJ9ZDjy0AalZ3-I7_m6Q/exec" } } };
+        const API_URL = CONFIG.system.backend.scriptUrl;
+
+        let currentTab = 'RESTAURANT RESERVATIONS';
+        let selectedRowIndex = null;
+        let selectedRowData = null; // Store for AI context
+        let refreshTimer = 30;
+
+        function switchTab(tab, el) {
+            currentTab = tab;
+            document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('page-title').innerText = tab.replace('_', ' ');
+            fetchData();
+        }
+
+        // AUTO POLLING SYSTEM
+        setInterval(() => {
+            refreshTimer--;
+            document.getElementById('timer').innerText = refreshTimer;
+            if (refreshTimer <= 0) {
+                fetchData();
+                refreshTimer = 30;
+            }
+        }, 1000);
+
+        async function fetchData() {
+            const container = document.getElementById('content-area');
+            
+            if (currentTab === 'ANALYTICS') {
+                container.innerHTML = '<p>Loading Analytics...</p>';
+                try {
+                    const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "get_analytics" }) });
+                    const data = await res.json();
+                    renderAnalytics(data.analytics);
+                } catch(e) { console.error(e); }
+                return;
+            }
+
+            try {
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    body: JSON.stringify({ action: "fetch_data", tab: currentTab, filter: "open" })
+                });
+                const json = await res.json();
+                renderCards(json.data);
+            } catch (error) {
+                console.log("Fetch error, likely Demo mode or network issue");
+            }
+        }
+
+        function renderCards(data) {
+            const container = document.getElementById('content-area');
+            container.innerHTML = '';
+            
+            if (!data || data.length < 2) {
+                container.innerHTML = '<p style="color:#888;">No active tickets.</p>';
+                return;
+            }
+
+            // Slice header off
+            const rows = data.slice(1).reverse(); 
+
+            rows.forEach((row, index) => {
+                const originalIndex = data.length - index; 
+
+                let title, detail, meta, urgencyClass = 'normal';
+                let guestName = "", issue = "", urgency = "Normal";
+
+                // Customize display based on Tab
+                if (currentTab.includes('RESTAURANT')) {
+                    title = row[1]; // Name
+                    detail = `Pax: ${row[3]} | Time: ${row[4]}`;
+                    meta = `Ph: ${row[2]}`;
+                    guestName = row[1]; issue = "Reservation for " + row[3];
+                } else if (currentTab.includes('MAINTENANCE')) {
+                    title = `Room ${row[2]}`;
+                    detail = row[3]; // Issue
+                    meta = `Guest: ${row[1]}`;
+                    guestName = row[1]; issue = row[3];
+                    if (row[4] === 'URGENT') { urgencyClass = 'urgent'; urgency = "High"; }
+                } else if (currentTab.includes('HOUSEKEEPING')) {
+                    title = `Room ${row[1]}`;
+                    detail = row[3]; // Request
+                    meta = `Guest: ${row[2]}`;
+                    guestName = row[2]; issue = row[3];
+                } else {
+                    title = row[1];
+                    detail = `Check-in: ${row[6]} (${row[7]} nights)`;
+                    meta = row[3]; // Email
+                    guestName = row[1]; issue = "Room Booking Inquiry";
+                }
+
+                const cardData = JSON.stringify({ index: originalIndex, name: guestName, detail: detail, urgency: urgency, issue: issue });
+
+                const html = `
+                    <div class="ticket-card ${urgencyClass}" onclick='openModal(${cardData})'>
+                        <div class="card-header">
+                            <span>#${originalIndex}</span>
+                            <span>${new Date(row[0]).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                        </div>
+                        <div class="card-title">${title}</div>
+                        <div class="card-detail">${detail}</div>
+                        <span class="tag">${meta}</span>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+        }
+
+        function renderAnalytics(data) {
+            const container = document.getElementById('content-area');
+            container.innerHTML = `
+                <div class="ticket-card normal" style="text-align:center">
+                    <h1>${data.total}</h1>
+                    <p>Total Requests (7 Days)</p>
+                </div>
+                <div class="ticket-card urgent" style="text-align:center">
+                    <h1>${data.open}</h1>
+                    <p>Open Tickets</p>
+                </div>
+                 <div class="ticket-card completed" style="text-align:center">
+                    <h1>${data.completed}</h1>
+                    <p>Completed</p>
+                </div>
+            `;
+        }
+
+        function openModal(data) {
+            selectedRowIndex = data.index;
+            selectedRowData = data;
+            
+            document.getElementById('modal-title').innerText = currentTab.replace('_', ' ');
+            document.getElementById('modal-desc').innerText = `${data.name}: ${data.issue}`;
+            document.getElementById('ai-suggestion').style.display = 'none';
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        async function getAiSuggestion() {
+            const box = document.getElementById('ai-suggestion');
+            box.style.display = 'block';
+            box.innerText = "✨ Consulting Gemini...";
+            
+            try {
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        action: "suggest_response",
+                        guestName: selectedRowData.name,
+                        details: selectedRowData.issue,
+                        ticketType: currentTab,
+                        urgency: selectedRowData.urgency
+                    })
+                });
+                const json = await res.json();
+                box.innerHTML = json.suggestion.replace(/\n/g, '<br>');
+            } catch(e) {
+                box.innerText = "Failed to get suggestion.";
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        async function updateStatus(status) {
+            await fetch(API_URL, {
+                method: "POST",
+                body: JSON.stringify({
+                    action: "update_status",
+                    tab: currentTab,
+                    rowIndex: selectedRowIndex,
+                    newStatus: status
+                })
+            });
+            closeModal();
+            fetchData();
+        }
+
+        // Initial Load
+        fetchData();
+    </script>
+</body>
+</html>
